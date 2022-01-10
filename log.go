@@ -22,6 +22,7 @@ type Config struct {
 	MaxSize     int // megabytes
 	MaxAge      int // days
 	MaxBackups  int
+	Compress    bool // gz
 }
 
 func Init(cfg *Config) {
@@ -46,7 +47,7 @@ func Init(cfg *Config) {
 
 	core := consoleCore
 	if cfg.SendToFile {
-		fileSyncer := getLogWriter(cfg.Filename, cfg.MaxSize, cfg.MaxBackups, cfg.MaxAge)
+		fileSyncer := getLogWriter(cfg.Filename, cfg.MaxSize, cfg.MaxBackups, cfg.MaxAge, cfg.Compress)
 		fileEncoder := getJSONEncoder(cfg)
 		fileCore := zapcore.NewCore(fileEncoder, fileSyncer, l)
 
@@ -96,12 +97,13 @@ func getEncoder(cfg *Config, jsonFormat bool) zapcore.Encoder {
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
-func getLogWriter(filename string, maxSize, maxBackup, maxAge int) zapcore.WriteSyncer {
+func getLogWriter(filename string, maxSize, maxBackup, maxAge int, compress bool) zapcore.WriteSyncer {
 	lumberJackLogger := &lumberjack.Logger{
-		Filename: filename,
-		// MaxSize:    maxSize,
-		// MaxBackups: maxBackup,
-		// MaxAge:     maxAge,
+		Filename:   filename,
+		MaxSize:    maxSize,
+		MaxBackups: maxBackup,
+		MaxAge:     maxAge,
+		Compress:   compress,
 	}
 
 	return zapcore.AddSync(lumberJackLogger)
@@ -140,7 +142,7 @@ func getSimpleLogger() *zap.SugaredLogger {
 }
 
 func NewFileLogger(path string) *zap.Logger {
-	fileSyncer := getLogWriter(path, 0, 0, 0)
+	fileSyncer := getLogWriter(path, 0, 0, 0, false)
 	fileEncoder := getJSONEncoder(&Config{})
 	fileCore := zapcore.NewCore(fileEncoder, fileSyncer, zap.DebugLevel)
 	return zap.New(fileCore)
