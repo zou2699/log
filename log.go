@@ -58,6 +58,13 @@ func Init(cfg *Config) {
 	simpleLogger = logger.WithOptions(zap.AddCallerSkip(1)).Sugar()
 }
 
+func DefaultInit() {
+	Init(&Config{
+		Level:       "debug",
+		Development: true,
+	})
+}
+
 func getJSONEncoder(cfg *Config) zapcore.Encoder {
 	return getEncoder(cfg, true)
 }
